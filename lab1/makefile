@@ -1,0 +1,2 @@
+run:
+	dosbox-x "$(PWD)"

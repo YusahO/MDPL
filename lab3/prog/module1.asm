@@ -1,0 +1,42 @@
+PUBLIC VAL1
+PUBLIC VAL2
+EXTRN receive_values: FAR
+
+STK SEGMENT PARA STACK 'STACK'
+    DB 100 DUP(0)
+STK ENDS
+
+DS1 SEGMENT PARA 'DATA'
+    VAL1 DB 0
+    VAL2 DB 0
+    NEWLINE DB 13
+            DB 10
+            DB '$'
+    RESULTPROMPT DB 'Result: ', '$'
+DS1 ENDS
+
+CS1 SEGMENT PARA PUBLIC 'CODE'
+    ASSUME CS: CS1, DS: DS1, SS: STK
+main:
+    CALL receive_values
+
+    MOV AX, DS1
+    MOV DS, AX
+
+    MOV DX, OFFSET RESULTPROMPT
+    MOV AH, 09h
+    INT 21h
+
+    MOV AL, VAL1
+    SUB AL, VAL2
+    ADD AL, 30h
+
+    MOV DL, AL
+    MOV AH, 02h
+    INT 21h
+
+    MOV AH, 4Ch
+    INT 21h 
+    
+CS1 ENDS
+END main

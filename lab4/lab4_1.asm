@@ -15,6 +15,8 @@ DSEG SEGMENT PARA PUBLIC 'DATA'
 
     input_rows_prompt DB "Input rows amount (1-9): ", '$'
     input_cols_prompt DB "Input cols amount (1-9): ", '$'
+    error_wrong_dims_msg DB "Error: wrong dimensions", 13, 10, '$'
+    empty_matrix_msg DB "Empty matrix"
     newline DB 13, 10, '$'
 DSEG ENDS
 
@@ -62,6 +64,8 @@ print_matrix PROC
 print_loop1:
     PUSH CX
     MOV CL, mcols
+    CMP CL, 0h
+    JE print_empty_matrix
     MOV AH, 02h
     XOR SI, SI
     print_loop2:
@@ -77,6 +81,14 @@ print_loop1:
     ADD BX, maxcols
     POP CX
     LOOP print_loop1
+    JMP print_matrix_end
+
+print_empty_matrix:
+    POP CX
+    MOV AH, 09h
+    MOV DX, OFFSET empty_matrix_msg
+    INT 21h
+print_matrix_end:
     RET
 print_matrix ENDP
 
@@ -89,10 +101,9 @@ delete_column_loop1:
     MOV CL, mcols
     SUB CL, BL
     DEC CL
-    ; MOV SI, BX
     MOV SI, DI
     CMP CL, 0h
-    JE delete_column_end
+    JE no_shift
     delete_column_loop2:
         MOV AL, mat[SI][bx+1]
         MOV mat[SI][bx], AL
@@ -101,8 +112,10 @@ delete_column_loop1:
     MOV mat[si][bx], 0
     POP CX
     ADD DI, maxcols
-    ; MOV SI, DI
     LOOP delete_column_loop1
+    JMP delete_column_end
+no_shift:
+    POP CX
 delete_column_end:
     MOV AL, mcols ; уменьшение количества столбцов на 1
     DEC AL
@@ -153,6 +166,12 @@ main:
     MOV AH, 01h
     INT 21h
 
+    ; проверка правильности введенного числа строк
+    CMP AL, 39h
+    JG error_dims
+    CMP AL, 30h
+    JLE error_dims
+
     SUB AL, 30h
     MOV mrows, AL
 
@@ -165,6 +184,12 @@ main:
     MOV AH, 01h
     INT 21h
 
+    ; проверка правильности введенного числа столбцов
+    CMP AL, 39h
+    JG error_dims
+    CMP AL, 30h
+    JLE error_dims
+
     SUB AL, 30h
     MOV mcols, AL
 
@@ -174,6 +199,12 @@ main:
     CALL print_newline
     CALL delete_matching_columns
     CALL print_matrix
+
+error_dims:
+    CALL print_newline
+    MOV DX, OFFSET error_wrong_dims_msg
+    MOV AH, 09h
+    INT 21h
 
     MOV AH, 4Ch
     INT 21h

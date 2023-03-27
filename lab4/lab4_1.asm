@@ -10,10 +10,11 @@ DSEG SEGMENT PARA PUBLIC 'DATA'
     mcols DB 0
     mrows DB 0
 
+    maxrows DW 09h
+    maxcols DW 09h
+
     input_rows_prompt DB "Input rows amount (1-9): ", '$'
     input_cols_prompt DB "Input cols amount (1-9): ", '$'
-    input_elem_prompt DB "Input element: ", '$'
-    cur_row_prompt DB "Row ", '$'
     newline DB 13, 10, '$'
 DSEG ENDS
 
@@ -28,7 +29,7 @@ print_newline:
 
 input_matrix PROC
     XOR BX, BX
-    XOR CX, CX
+    XOR CH, CH
     MOV CL, mrows
 input_loop1:
     PUSH CX
@@ -48,16 +49,15 @@ input_loop1:
         LOOP input_loop2
 
     CALL print_newline
-    ADD BL, mcols
+    ADD BX, maxcols
     POP CX
     LOOP input_loop1
-
     RET
 input_matrix ENDP
 
 print_matrix PROC
     XOR BX, BX
-    XOR CX, CX
+    XOR CH, CH
     MOV CL, mrows
 print_loop1:
     PUSH CX
@@ -74,15 +74,72 @@ print_loop1:
         LOOP print_loop2
 
     CALL print_newline 
-    ADD BL, mcols
+    ADD BX, maxcols
     POP CX
     LOOP print_loop1
-
     RET
 print_matrix ENDP
 
-delete_matching_columns PROC
+delete_column PROC
+    DEC BX
+    MOV CL, mrows
+    XOR DI, DI
+delete_column_loop1:
+    PUSH CX
+    MOV CL, mcols
+    SUB CL, BL
+    DEC CL
+    ; MOV SI, BX
+    MOV SI, DI
+    CMP CL, 0h
+    JE delete_column_end
+    delete_column_loop2:
+        MOV AL, mat[SI][bx+1]
+        MOV mat[SI][bx], AL
+        INC SI
+        LOOP delete_column_loop2
+    MOV mat[si][bx], 0
+    POP CX
+    ADD DI, maxcols
+    ; MOV SI, DI
+    LOOP delete_column_loop1
+delete_column_end:
+    MOV AL, mcols ; уменьшение количества столбцов на 1
+    DEC AL
+    MOV mcols, AL
+    RET
+delete_column ENDP
 
+delete_matching_columns PROC
+    XOR BX, BX
+    XOR SI, SI
+    XOR CH, CH
+    MOV CL, mcols
+find_columns_loop1:
+    PUSH CX
+    MOV CL, mrows
+
+    find_columns_loop2:
+        CMP mat[BX][SI], 'A'
+        JNE finish_loop2
+        ADD SI, maxrows
+        LOOP find_columns_loop2
+
+    finish_loop2:
+        INC BX
+
+        CMP CL, 0h
+        JE need_to_delete_col
+        JNE continue_loop2
+
+    need_to_delete_col:
+        CALL delete_column
+
+    continue_loop2:
+        XOR SI, SI
+        POP CX
+        LOOP find_columns_loop1
+    RET
 delete_matching_columns ENDP
 
 main:
@@ -115,6 +172,7 @@ main:
 
     CALL input_matrix
     CALL print_newline
+    CALL delete_matching_columns
     CALL print_matrix
 
     MOV AH, 4Ch

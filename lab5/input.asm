@@ -16,6 +16,7 @@ input_number proc near
     mov ah, 09h
     mov dx, offset input_num_msg
     int 21h
+    mov number, 0
 
     mov cx, 4h
     xor dx, dx

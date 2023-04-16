@@ -1,0 +1,24 @@
+The code you posted is actually invoking an MS-DOS system call. 
+The AH register contains the number of the service to invoke, 
+and the AL register contains a parameter for the service being invoked.
+In this case, AH=35h is the service to get the current interrupt vector for an interrupt. 
+AL=08h specifies the interrupt number to get the vector for which is IRQ8 (keyboard).
+Therefore, this sequence of assembly code will get the current address of the interrupt vector for the keyboard 
+and place it in the ES:BX register pair.
+To write your own interrupt in MASM 8086, you need to first declare the interrupt 
+using the INT instruction followed by the interrupt number. For example, to define an interrupt for IRQ1 (keyboard), you can write:
+MYINT PROC ; Interrupt processing code here iret ; Return from interrupt MYINT ENDP
+To register your interrupt with the system, you need to set its address to the corresponding interrupt vector. 
+This can be done using the SETVECT instruction, passing in the interrupt number:
+mov ax, offset MYINT ; Get the address of the interrupt handler mov ds:[1*4], ax ; Set the interrupt vector for IRQ1 to MYINT
+
+
+mov ah, 25h
+mov al, 08h
+int 21h
+The code sets up an interrupt to read a character from the keyboard with the 8086 processor. 
+Specifically, it loads the value 25h into the AH register, which is the interrupt number for the keyboard interrupt in DOS. 
+It then sets the value 08h in the AL register, which is the sub-function code for the 'Read Character Without Echo' 
+function of the keyboard interrupt. Finally, it triggers the interrupt by calling the INT instruction with the value 21h, 
+which is the interrupt for the DOS operating system. 
+Overall, this code is used to read a single key press from the keyboard without displaying it on the screen.

@@ -9,7 +9,8 @@ DSEG segment para public 'DATA'
          db "3. Print signed in octal", 13, 10
          db "4. Exit", 13, 10, 10
          db "Input action: ", '$'
-
+    
+    error_action_prompt db 13, 10, "Error: invalid action", 13, 10, '$'
     actions dw input_number, print_number_bin, print_number_oct, exit_program
 DSEG ends
 
@@ -44,6 +45,11 @@ interact_with_menu:
     mov ah, 01h
     int 21h
 
+    cmp al, 31h
+    jl error_action
+    cmp al, 34h
+    jg error_action
+
     xor ah, ah
     sub al, 31h
 
@@ -54,7 +60,14 @@ interact_with_menu:
 
     call print_newline
     call actions[si]
+    jmp loop_end
 
+error_action:
+    mov dx, offset error_action_prompt
+    mov ah, 09h
+    int 21h
+
+loop_end:
     jmp interact_with_menu
 
 CSEG ends

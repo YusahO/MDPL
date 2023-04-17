@@ -10,10 +10,14 @@ main:
 
     delay db 11111b
     oldint dd ?
-    intercepted db 69
+    intercepted db 1
 
-MYINT proc far
+MYINT:
     pusha
+
+my_interrupt_call_old:
+    pushf
+    call cs:oldint
 
     mov ah, 02h
     int 1ah ; получение доступа к системным часам. DH -- время в секундах
@@ -34,17 +38,13 @@ my_interrupt_reset_delay:
 
 my_interrupt_end:
     popa
-    
-    pushf
-    call cs:oldint
     iret
-MYINT endp
 
 INIT:
     mov ax, 3508h
-    int 21h
+    int 21h  ; получить адрес прерывания ввода без эха
 
-    cmp es:intercepted, 69
+    cmp es:intercepted, 1
     je UNINSTALL
 
     jmp INSTALL
@@ -53,13 +53,12 @@ INSTALL:
     mov word ptr oldint, bx
     mov word ptr oldint + 2, es
 
-    mov ax, 2508h
+    mov ax, 2508h ; установить свой обработчик
 
     mov dx, offset MYINT
     int 21h
 
     mov dx, offset INIT
-    
     int 27h
 
 UNINSTALL:

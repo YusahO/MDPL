@@ -11,6 +11,7 @@ main:
     delay db 11111b
     oldint dd ?
     intercepted db 1
+    current_time db 0
 
 MYINT:
     pusha
@@ -21,6 +22,10 @@ my_interrupt_call_old:
 
     mov ah, 02h
     int 1ah ; получение доступа к системным часам. DH -- время в секундах
+
+    cmp dh, current_time
+    je my_interrupt_end
+    mov current_time, dh
 
     mov al, 0f3h
 

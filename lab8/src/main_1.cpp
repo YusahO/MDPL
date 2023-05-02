@@ -97,8 +97,8 @@ void measureMulTimeCPP(T a, T b, std::size_t reps)
 
 int main()
 {
-    float af = 1.1f, bf = 6.9f;
-    double ad = 4.2, bd = 1.8;
+    float af = 10.1f, bf = 6.9f;
+    double ad = 133.7, bd = 1.8;
 
     #ifndef ASM
     std::cout << "\nCPP-only operations performance\n";
